@@ -180,3 +180,36 @@ func parseInterval(time string) (interval, error) {
 	return interval{Start: start, End: end}, nil
 
 }
+
+func (s *Stats) GetAverageTicketPrice(destination string) (float64, error) {
+	dest := make(map[string]struct {
+		TotalPrice float64
+		Count      int
+	})
+
+	for _, t := range s.tickets {
+		entry, found := dest[t.Country]
+		if !found {
+			dest[t.Country] = struct {
+				TotalPrice float64
+				Count      int
+			}{
+				TotalPrice: float64(t.Amount),
+				Count:      1,
+			}
+			continue
+		}
+
+		entry.TotalPrice += float64(t.Amount)
+		entry.Count++
+		dest[t.Country] = entry
+	}
+
+	entry, found := dest[destination]
+	if !found {
+		return 0, fmt.Errorf("destination not found")
+	}
+
+	averagePrice := entry.TotalPrice / float64(entry.Count)
+	return averagePrice, nil
+}

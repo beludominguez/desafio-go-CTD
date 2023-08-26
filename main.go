@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/bootcamp-go/desafio-go-bases/internal/tickets"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/bootcamp-go/desafio-go-bases/internal/tickets"
 )
 
 const (
@@ -34,7 +35,7 @@ func main() {
 	}
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 	chErr := make(chan error)
 
 	go func(destination string, cErr chan<- error) {
@@ -68,6 +69,17 @@ func main() {
 			fmt.Println(fmt.Sprintf("Total tickets by time %s - %d", time, ticketsByTime))
 		}(t, chErr)
 	}
+
+	go func(destination string, total int, cErr chan<- error) {
+		defer wg.Done()
+		avgPrice, fnErr := stats.GetAverageTicketPrice(destination)
+		if fnErr != nil {
+			cErr <- fnErr
+			fmt.Println("Error calculating average price:", fnErr)
+		}
+		fmt.Printf("Average ticket price to %s: $%.2f\n", destination, avgPrice)
+	}(*destination, *totalPeople, chErr)
+
 	log.Println("Waiting for results")
 
 	go func() {
